@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeChat Embed Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .title {
+            font-size: 2.5em;
+            color: #333;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .setup-code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .config-panel {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .config-panel h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background: #1565c0;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">💬 ForgeChat Embed Demo</h1>
+            <p class="subtitle">Configure and test your AI chat widget</p>
+        </div>
+
+        <div class="config-panel">
+            <h3>🔧 Configuration</h3>
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="orgUuid">Organization UUID *</label>
+                    <input type="text" id="orgUuid" placeholder="your-org-uuid-here" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productUuid">Product UUID *</label>
+                    <input type="text" id="productUuid" placeholder="your-product-uuid-here" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="authToken">Auth Token *</label>
+                    <input type="password" id="authToken" placeholder="your-auth-token-here" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="title">Chat Title</label>
+                    <input type="text" id="title" value="ForgeChat Assistant">
+                </div>
+                
+                <div class="form-group">
+                    <label for="theme">Theme</label>
+                    <select id="theme">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="position">Position</label>
+                    <select id="position">
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="top-left">Top Left</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn">Initialize ForgeChat</button>
+                <button type="button" id="destroyBtn" class="btn" style="background: #dc3545; margin-left: 10px;" disabled>Destroy</button>
+            </form>
+            
+            <div id="status"></div>
+        </div>
+
+        <div class="setup-code">
+            <h4>📋 Embed Code (Copy this to your website):</h4>
+            <pre id="embedCode"><!-- ForgeChat will be embedded here --></pre>
+        </div>
+
+        <div>
+            <h3>✨ Features Included</h3>
+            <ul>
+                <li>🤖 AI-powered responses via BabbleBeaver</li>
+                <li>📋 Punchlist submission capabilities</li>
+                <li>🎨 Customizable themes and colors</li>
+                <li>📱 Mobile responsive design</li>
+                <li>💾 Session persistence</li>
+                <li>🔧 Easy configuration and setup</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Load ForgeChat -->
+    <link rel="stylesheet" href="../src/forgechat.css">
+    <script src="../src/config.js"></script>
+    <script src="../src/forgechat.js"></script>
+
+    <script>
+        let forgeChatInstance = null;
+        const configHelper = new ForgeChatConfig();
+        
+        // Form elements
+        const form = document.getElementById('configForm');
+        const statusDiv = document.getElementById('status');
+        const destroyBtn = document.getElementById('destroyBtn');
+        const embedCode = document.getElementById('embedCode');
+
+        // Update embed code display
+        function updateEmbedCode() {
+            const config = getFormConfig();
+            embedCode.textContent = `            embedCode.textContent = `<!-- Add to your website -->
+<link rel="stylesheet" href="https://buildly-marketplace.github.io/ForgeChat/src/forgechat.css">
+<script src="https://buildly-marketplace.github.io/ForgeChat/src/forgechat.js"></script>
+<script>
+ForgeChat.init({
+  organizationUuid: '${config.organizationUuid}',
+  productUuid: '${config.productUuid}',
+  authToken: '${config.authToken}',
+  title: '${config.title}',
+  theme: '${config.theme}',
+  position: '${config.position}'
+});
+</script>`;
+        }
+
+        // Get configuration from form
+        function getFormConfig() {
+            return {
+                organizationUuid: document.getElementById('orgUuid').value,
+                productUuid: document.getElementById('productUuid').value,
+                authToken: document.getElementById('authToken').value,
+                title: document.getElementById('title').value,
+                theme: document.getElementById('theme').value,
+                position: document.getElementById('position').value,
+                debug: true
+            };
+        }
+
+        // Show status message
+        function showStatus(message, type = 'success') {
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const config = getFormConfig();
+            
+            // Validate configuration
+            const validation = configHelper.validate(config);
+            
+            if (!validation.isValid) {
+                showStatus(`Configuration errors: ${validation.errors.join(', ')}`, 'error');
+                return;
+            }
+
+            // Show warnings if any
+            if (validation.warnings.length > 0) {
+                console.warn('Configuration warnings:', validation.warnings);
+            }
+
+            try {
+                // Destroy existing instance
+                if (forgeChatInstance) {
+                    ForgeChat.destroy();
+                }
+
+                // Initialize ForgeChat
+                forgeChatInstance = ForgeChat.init({
+                    ...config,
+                    onReady: (instance) => {
+                        showStatus('✅ ForgeChat initialized successfully! Try clicking the chat bubble.');
+                        destroyBtn.disabled = false;
+                        updateEmbedCode();
+                    },
+                    onMessage: (message) => {
+                        console.log('New message:', message);
+                    },
+                    onError: (error, context) => {
+                        showStatus(`❌ Error in ${context}: ${error.message}`, 'error');
+                    }
+                });
+
+            } catch (error) {
+                showStatus(`❌ Failed to initialize: ${error.message}`, 'error');
+            }
+        });
+
+        // Handle destroy
+        destroyBtn.addEventListener('click', () => {
+            ForgeChat.destroy();
+            forgeChatInstance = null;
+            destroyBtn.disabled = true;
+            showStatus('ForgeChat destroyed');
+        });
+
+        // Update embed code when form changes
+        form.addEventListener('input', updateEmbedCode);
+        
+        // Initial embed code
+        updateEmbedCode();
+        
+        // Pre-fill demo values
+        document.getElementById('orgUuid').value = 'demo-org-' + Math.random().toString(36).substr(2, 6);
+        document.getElementById('productUuid').value = 'demo-product-' + Math.random().toString(36).substr(2, 6);
+        document.getElementById('authToken').value = 'demo-token-' + Math.random().toString(36).substr(2, 10);
+        updateEmbedCode();
+    </script>
+</body>
+</html>

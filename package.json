@@ -1,0 +1,78 @@
+{
+  "name": "forgechat",
+  "version": "1.0.0",
+  "description": "AI-powered chat widget with BabbleBeaver integration for the Buildly Forge",
+  "main": "src/forgechat.js",
+  "scripts": {
+    "start": "node ops/server.js",
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "cp src/forgechat.css dist/forgechat.css",
+    "build:js": "cp src/forgechat.js dist/forgechat.js",
+    "dev": "node -e \"console.log('Development server starting...'); require('child_process').spawn('python3', ['-m', 'http.server', '8000'], {stdio: 'inherit'})\"",
+    "docker:build": "docker build -f ops/Dockerfile -t forgechat .",
+    "docker:run": "docker run -p 3000:3000 --env-file ops/.env forgechat",
+    "deploy": "./ops/deploy.sh",
+    "test": "echo \"Tests coming soon\" && exit 0",
+    "lint": "echo \"Linting coming soon\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Buildly-Marketplace/ForgeChat.git"
+  },
+  "keywords": [
+    "ai",
+    "chat",
+    "widget",
+    "babblebeaver",
+    "customer-support",
+    "buildly",
+    "forge"
+  ],
+  "author": "Buildly Labs <forge@buildly.io>",
+  "license": "BSL-1.1",
+  "bugs": {
+    "url": "https://github.com/Buildly-Marketplace/ForgeChat/issues"
+  },
+  "homepage": "https://buildly-marketplace.github.io/ForgeChat/",
+  "files": [
+    "src/",
+    "ops/",
+    "ci/",
+    "assets/",
+    "examples/",
+    "index.html",
+    "INSTALL.md",
+    "LICENSE.md",
+    "BUILDLY.yaml"
+  ],
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4",
+    "serve-static": "^1.15.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "forge": {
+    "type": "chat-widget",
+    "category": "support",
+    "targets": ["github-pages", "docker", "embed"],
+    "integration": {
+      "babblebeaver": {
+        "required": true,
+        "version": ">=1.0.0"
+      }
+    }
+  }
+}

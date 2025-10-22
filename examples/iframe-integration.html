@@ -1,0 +1,155 @@
+<!-- iframe Integration Example -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iframe ChatBot Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .iframe-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 600px;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 9999;
+            background: white;
+            display: none;
+        }
+        
+        .iframe-container.visible {
+            display: block;
+        }
+        
+        .chat-trigger {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: #1976d2;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            transition: all 0.3s ease;
+        }
+        
+        .chat-trigger:hover {
+            background: #1565c0;
+            transform: scale(1.05);
+        }
+        
+        .demo-content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .iframe-container {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                width: auto;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>iframe Integration Example</h1>
+    <p>This example shows how to embed the ChatBot using an iframe for complete isolation from the parent page.</p>
+
+    <div class="demo-content">
+        <h3>Benefits of iframe Integration:</h3>
+        <ul>
+            <li><strong>Complete Isolation:</strong> No CSS or JavaScript conflicts with parent page</li>
+            <li><strong>Security:</strong> Sandboxed environment for the ChatBot</li>
+            <li><strong>Easy Integration:</strong> Just include an iframe element</li>
+            <li><strong>Cross-Domain Support:</strong> Can load ChatBot from different domain</li>
+        </ul>
+        
+        <h3>Usage:</h3>
+        <p>Click the blue button in the bottom-right corner to open the ChatBot in an iframe.</p>
+        
+        <h3>Configuration:</h3>
+        <p>The iframe loads a separate HTML page with the ChatBot, allowing for complete customization and isolation.</p>
+    </div>
+
+    <!-- Chat trigger button -->
+    <button class="chat-trigger" onclick="toggleChat()">💬</button>
+
+    <!-- iframe container -->
+    <div id="chatIframe" class="iframe-container">
+        <iframe 
+            src="iframe-chatbot.html"
+            width="100%" 
+            height="100%" 
+            frameborder="0"
+            title="BabbleBeaver ChatBot"
+            allow="microphone; camera"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups">
+        </iframe>
+    </div>
+
+    <script>
+        let isOpen = false;
+        
+        function toggleChat() {
+            const iframe = document.getElementById('chatIframe');
+            const trigger = document.querySelector('.chat-trigger');
+            
+            isOpen = !isOpen;
+            
+            if (isOpen) {
+                iframe.classList.add('visible');
+                trigger.innerHTML = '✕';
+                trigger.style.background = '#f44336';
+            } else {
+                iframe.classList.remove('visible');
+                trigger.innerHTML = '💬';
+                trigger.style.background = '#1976d2';
+            }
+        }
+        
+        // Listen for messages from the iframe
+        window.addEventListener('message', function(event) {
+            // Verify origin for security
+            // if (event.origin !== 'https://your-trusted-domain.com') return;
+            
+            if (event.data.type === 'chatbot_ready') {
+                console.log('ChatBot iframe is ready');
+            } else if (event.data.type === 'chatbot_message') {
+                console.log('New message from ChatBot:', event.data.message);
+            } else if (event.data.type === 'chatbot_close') {
+                toggleChat();
+            }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isOpen) {
+                toggleChat();
+            }
+        });
+    </script>
+</body>
+</html>

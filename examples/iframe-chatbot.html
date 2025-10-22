@@ -1,0 +1,200 @@
+<!-- iframe ChatBot Content -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabbleBeaver ChatBot - iframe</title>
+    <link rel="stylesheet" href="../babblebeaver-chatbot.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Override positioning for iframe */
+        .babblebeaver-chatbot {
+            position: static !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .chatbot-window {
+            position: static !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-height: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+            bottom: auto !important;
+            right: auto !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        
+        .chatbot-bubble {
+            display: none !important;
+        }
+        
+        /* Add close button in header for iframe */
+        .iframe-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            margin-left: 8px;
+        }
+        
+        .iframe-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Configure ChatBot for iframe usage
+        window.babbleBeaverConfig = {
+            apiEndpoint: 'https://api.buildlycore.com',
+            productUuid: 'iframe-demo-product-uuid',
+            organizationUuid: 'iframe-demo-org-uuid',
+            
+            // Force open since we're in an iframe
+            autoOpen: true,
+            
+            title: 'Support Assistant',
+            theme: 'light',
+            primaryColor: '#1976d2',
+            
+            enablePunchlist: true,
+            persistSession: true,
+            debug: true,
+            
+            onReady: function(bot) {
+                console.log('iframe ChatBot ready!');
+                
+                // Notify parent window that ChatBot is ready
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'chatbot_ready',
+                        timestamp: new Date().toISOString()
+                    }, '*');
+                }
+                
+                // Add close button for iframe
+                const header = bot.container.querySelector('.chatbot-header');
+                if (header) {
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'iframe-close';
+                    closeBtn.innerHTML = `
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    `;
+                    closeBtn.onclick = function() {
+                        if (window.parent !== window) {
+                            window.parent.postMessage({
+                                type: 'chatbot_close',
+                                timestamp: new Date().toISOString()
+                            }, '*');
+                        }
+                    };
+                    header.appendChild(closeBtn);
+                }
+            },
+            
+            onMessage: function(message) {
+                console.log('iframe message:', message);
+                
+                // Notify parent window of new messages
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'chatbot_message',
+                        message: message,
+                        timestamp: new Date().toISOString()
+                    }, '*');
+                }
+            },
+            
+            onPunchlistSubmit: function(result) {
+                console.log('iframe punchlist submitted:', result);
+                
+                // Notify parent window of punchlist submission
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'chatbot_punchlist_submit',
+                        result: result,
+                        timestamp: new Date().toISOString()
+                    }, '*');
+                }
+            },
+            
+            onError: function(error, context) {
+                console.error('iframe ChatBot error:', error, context);
+                
+                // Notify parent window of errors
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'chatbot_error',
+                        error: error.message || error,
+                        context: context,
+                        timestamp: new Date().toISOString()
+                    }, '*');
+                }
+            }
+        };
+    </script>
+    
+    <script src="../babblebeaver-chatbot.js"></script>
+    
+    <script>
+        // Listen for messages from parent window
+        window.addEventListener('message', function(event) {
+            // Verify origin for security in production
+            // if (event.origin !== 'https://your-trusted-domain.com') return;
+            
+            const chatbot = window.babbleBeaverBot;
+            if (!chatbot) return;
+            
+            switch(event.data.type) {
+                case 'send_message':
+                    chatbot.sendChatMessage(event.data.message);
+                    break;
+                    
+                case 'clear_session':
+                    chatbot.clearSession();
+                    break;
+                    
+                case 'update_config':
+                    chatbot.updateConfig(event.data.config);
+                    break;
+                    
+                default:
+                    console.log('Unknown message type:', event.data.type);
+            }
+        });
+        
+        // Add welcome message for iframe demo
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const chatbot = window.babbleBeaverBot;
+                if (chatbot) {
+                    chatbot.addMessage('bot', 'Hello! I\'m running inside an iframe. This provides complete isolation from the parent page while maintaining full functionality.');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

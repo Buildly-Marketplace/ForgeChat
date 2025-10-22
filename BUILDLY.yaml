@@ -1,0 +1,109 @@
+name: ForgeChat
+slug: forgechat
+version: 1.0.0
+summary: AI-powered support chat widget with BabbleBeaver integration for websites and apps.
+description: |
+  ForgeChat is a drop-in AI chat widget that connects to BabbleBeaver endpoints to provide 
+  intelligent customer support, FAQ assistance, and seamless integration with Buildly Labs 
+  projects. Perfect for adding AI-powered chat to any website or frontend application with 
+  minimal configuration.
+license: BSL-1.1 (changes to Apache-2.0 on 2027-10-22)
+author: Buildly Labs
+homepage: https://github.com/Buildly-Marketplace/ForgeChat
+repository: https://github.com/Buildly-Marketplace/ForgeChat
+categories: [support, ai, chat, customer-service, widgets]
+tags: [babblebeaver, ai-chat, support-widget, embed, javascript]
+
+targets:
+  - type: github-pages
+    name: Static Site Integration
+    description: Deploy ForgeChat as part of a static website with GitHub Pages
+    setup_guide: ci/pages-template-README.md
+    actions_workflow: ci/.github/workflows/pages.yml
+    requirements:
+      - GitHub account
+      - BabbleBeaver API credentials
+    
+  - type: docker
+    name: Containerized Deployment
+    description: Run ForgeChat in a Docker container for easy hosting
+    dockerfile: ops/Dockerfile
+    compose_file: ops/docker-compose.yml
+    requirements:
+      - Docker Engine 20.10+
+      - 512MB RAM minimum
+    
+  - type: embed
+    name: Widget Embed
+    description: Embed ForgeChat widget directly into existing websites
+    install_script: |
+      <!-- Add to your HTML head -->
+      <link rel="stylesheet" href="https://buildly-marketplace.github.io/ForgeChat/src/forgechat.css">
+      <script src="https://buildly-marketplace.github.io/ForgeChat/src/forgechat.js"></script>
+      
+      <!-- Initialize before closing body tag -->
+      <script>
+      ForgeChat.init({
+        apiEndpoint: 'YOUR_BABBLEBEAVER_ENDPOINT',
+        productUuid: 'YOUR_PRODUCT_UUID',
+        organizationUuid: 'YOUR_ORG_UUID'
+      });
+      </script>
+
+requirements:
+  cpu: "0.5+"
+  ram: "512MB+"
+  storage: "100MB+"
+  deps: [modern-browser, babblebeaver-api]
+
+features:
+  - AI-powered customer support chat
+  - BabbleBeaver API integration
+  - Customizable themes and styling
+  - Punchlist submission capabilities
+  - Session persistence
+  - File upload support
+  - Mobile responsive design
+  - Multi-language support
+  - Analytics and insights
+
+pricing:
+  free:
+    - Full source code access
+    - Manual installation
+    - Community support
+    - Basic documentation
+  paid: 19
+  paid_features:
+    - One-click deployment
+    - 30-day Labs support
+    - BabbleBeaver setup credits
+    - Priority documentation
+    - Custom styling assistance
+
+support:
+  tier: paid-30d
+  chat: buildly-labs
+  docs: README.md, INSTALL.md, and BRANDING.md
+  issues: https://github.com/Buildly-Marketplace/ForgeChat/issues
+  discussions: https://github.com/Buildly-Marketplace/ForgeChat/discussions
+
+integration:
+  babblebeaver:
+    required: true
+    docs: https://api.buildlycore.com/docs
+  labs:
+    optional: true
+    features: [project-linking, support-chat, analytics]
+
+security:
+  - Static analysis scanned
+  - Container vulnerability checked
+  - No PII collection without consent
+  - GDPR compliant
+  - SOC2 Type 1 aligned
+
+compatibility:
+  browsers: [chrome-90+, firefox-88+, safari-14+, edge-90+]
+  frameworks: [vanilla-js, react, vue, angular, svelte]
+  cms: [wordpress, drupal, shopify, webflow]

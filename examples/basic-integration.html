@@ -1,0 +1,52 @@
+<!-- Basic Integration Example -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic ChatBot Integration</title>
+    <link rel="stylesheet" href="babblebeaver-chatbot.css">
+</head>
+<body>
+    <h1>My Website with BabbleBeaver ChatBot</h1>
+    <p>This is a basic example of integrating the BabbleBeaver ChatBot into any website.</p>
+
+    <!-- Method 1: Pre-configure and auto-initialize -->
+    <script>
+        // Set configuration before loading the script
+        window.babbleBeaverConfig = {
+            apiEndpoint: 'https://api.buildlycore.com',
+            productUuid: 'your-product-uuid',
+            organizationUuid: 'your-org-uuid',
+            authToken: 'your-auth-token', // Optional
+            
+            // UI settings
+            position: 'bottom-right',
+            theme: 'light',
+            title: 'Support Assistant',
+            primaryColor: '#1976d2',
+            
+            // Behavior
+            autoOpen: false,
+            enablePunchlist: true,
+            persistSession: true,
+            
+            // Callbacks
+            onReady: function(bot) {
+                console.log('ChatBot is ready!');
+            },
+            
+            onMessage: function(message) {
+                console.log('New message:', message);
+            },
+            
+            onPunchlistSubmit: function(result) {
+                console.log('Punchlist submitted:', result);
+            }
+        };
+    </script>
+    
+    <!-- Load the ChatBot script - it will auto-initialize with the config above -->
+    <script src="babblebeaver-chatbot.js"></script>
+</body>
+</html>

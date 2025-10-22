@@ -1,0 +1,175 @@
+<!-- Manual Initialization Example -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual ChatBot Initialization</title>
+    <link rel="stylesheet" href="../babblebeaver-chatbot.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .controls {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #1565c0;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Manual ChatBot Control Example</h1>
+    <p>This example shows how to manually initialize and control the ChatBot programmatically.</p>
+
+    <div class="controls">
+        <h3>ChatBot Controls</h3>
+        <button id="initBtn">Initialize ChatBot</button>
+        <button id="openBtn" disabled>Open Chat</button>
+        <button id="closeBtn" disabled>Close Chat</button>
+        <button id="sendBtn" disabled>Send Test Message</button>
+        <button id="clearBtn" disabled>Clear Session</button>
+        <button id="destroyBtn" disabled>Destroy ChatBot</button>
+    </div>
+
+    <div id="status">
+        <p><strong>Status:</strong> <span id="statusText">Not initialized</span></p>
+        <p><strong>Messages:</strong> <span id="messageCount">0</span></p>
+    </div>
+
+    <!-- Load the ChatBot script without auto-initialization -->
+    <script src="../babblebeaver-chatbot.js"></script>
+    
+    <script>
+        let chatbot = null;
+        
+        // Get DOM elements
+        const initBtn = document.getElementById('initBtn');
+        const openBtn = document.getElementById('openBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const destroyBtn = document.getElementById('destroyBtn');
+        const statusText = document.getElementById('statusText');
+        const messageCount = document.getElementById('messageCount');
+
+        // Initialize ChatBot
+        initBtn.addEventListener('click', () => {
+            chatbot = new BabbleBeaverChatBot({
+                apiEndpoint: 'https://api.buildlycore.com',
+                productUuid: 'demo-product-uuid',
+                organizationUuid: 'demo-org-uuid',
+                
+                position: 'bottom-right',
+                theme: 'light',
+                title: 'Support Bot',
+                primaryColor: '#2196f3',
+                
+                enablePunchlist: true,
+                persistSession: true,
+                debug: true,
+                
+                onReady: (bot) => {
+                    statusText.textContent = 'Ready';
+                    updateButtons(true);
+                    console.log('ChatBot initialized!', bot);
+                },
+                
+                onMessage: (message) => {
+                    messageCount.textContent = chatbot.getMessages().length;
+                    console.log('Message:', message);
+                },
+                
+                onError: (error, context) => {
+                    console.error('ChatBot error:', error, context);
+                }
+            });
+        });
+
+        // Open chat
+        openBtn.addEventListener('click', () => {
+            if (chatbot) {
+                chatbot.openChat();
+            }
+        });
+
+        // Close chat
+        closeBtn.addEventListener('click', () => {
+            if (chatbot) {
+                chatbot.closeChat();
+            }
+        });
+
+        // Send test message
+        sendBtn.addEventListener('click', () => {
+            if (chatbot) {
+                const messages = [
+                    "Hello!",
+                    "Can you help me?",
+                    "I found an issue that needs tracking",
+                    "What can you do?",
+                    "How do I submit a punchlist item?"
+                ];
+                
+                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                chatbot.sendChatMessage(randomMessage);
+                chatbot.openChat();
+            }
+        });
+
+        // Clear session
+        clearBtn.addEventListener('click', () => {
+            if (chatbot) {
+                chatbot.clearSession();
+                messageCount.textContent = '0';
+                alert('Session cleared!');
+            }
+        });
+
+        // Destroy ChatBot
+        destroyBtn.addEventListener('click', () => {
+            if (chatbot) {
+                chatbot.destroy();
+                chatbot = null;
+                statusText.textContent = 'Destroyed';
+                messageCount.textContent = '0';
+                updateButtons(false);
+            }
+        });
+
+        // Update button states
+        function updateButtons(enabled) {
+            initBtn.disabled = enabled;
+            openBtn.disabled = !enabled;
+            closeBtn.disabled = !enabled;
+            sendBtn.disabled = !enabled;
+            clearBtn.disabled = !enabled;
+            destroyBtn.disabled = !enabled;
+        }
+    </script>
+</body>
+</html>
