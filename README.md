@@ -5,6 +5,7 @@
 ForgeChat is a drop-in AI chat widget that connects to BabbleBeaver endpoints to provide intelligent customer support, FAQ assistance, and seamless integration with Buildly Labs projects. Perfect for adding AI-powered chat to any website or frontend application with minimal configuration.
 
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE.md)
+[![Forge Marketplace](https://img.shields.io/badge/Buildly-Forge%20Marketplace-orange.svg)](https://collab.buildly.io/marketplace/app/forgechat/)
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=flat&logo=github&logoColor=white)](https://github.com/Buildly-Marketplace/ForgeChat)
 [![GitHub Pages](https://img.shields.io/badge/deploy-github%20pages-green.svg)](https://buildly-marketplace.github.io/ForgeChat/)
 
@@ -455,12 +456,31 @@ BabbleBeaverChatBot.init({
 
 ## 🆘 Support
 
-For issues or questions:
+### Community Support
+- **GitHub Issues:** [Report bugs and request features](https://github.com/Buildly-Marketplace/ForgeChat/issues)
+- **Documentation:** Check README.md, INSTALL.md, and BRANDING.md in this repository
+- **GitHub Discussions:** [Community help and questions](https://github.com/Buildly-Marketplace/ForgeChat/discussions)
+
+### Commercial Support
+- **Buildly Forge:** [Purchase commercial license and premium support](https://collab.buildly.io/marketplace/app/forgechat/)
+- **Buildly Labs:** Contact through your project dashboard for enterprise solutions
+
+### Self-Help Checklist
 1. Check the browser console for errors
 2. Verify your configuration
 3. Check API connectivity
-4. Contact Buildly Labs support
+4. Review the troubleshooting guide in INSTALL.md
 
 ## 📄 License
+
+ForgeChat is licensed under the [Business Source License 1.1 (BSL 1.1)](LICENSE.md).
+
+### Key Points:
+- **Free for non-commercial use** - Development, testing, and personal projects
+- **Commercial use requires purchase** - [Get commercial license via Buildly Forge](https://collab.buildly.io/marketplace/app/forgechat/)
+- **Apache 2.0 conversion** - Automatically converts to Apache 2.0 on October 22, 2027
+- **30-day support included** - Premium support included with Forge marketplace purchase
+
+For detailed licensing information, see [LICENSE.md](LICENSE.md).
 
 Copyright © 2025 Buildly Labs. All rights reserved.
