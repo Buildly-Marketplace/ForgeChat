@@ -58,9 +58,11 @@ class ForgeChat {
     this.messages = [];
     this.sessionId = this.generateSessionId();
     this.conversationId = null;
+    this.contextHash = null; // Store context hash from BabbleBeaver for efficient follow-ups
     this.container = null;
     this.isTyping = false;
     this.isSubmitting = false;
+    this.contextData = null;
 
     this.init();
   }
@@ -68,7 +70,7 @@ class ForgeChat {
   /**
    * Initialize the chatbot
    */
-  init() {
+  async init() {
     this.log('Initializing ForgeChat widget...', this.options);
     
     // Load session if persistence is enabled
@@ -84,6 +86,9 @@ class ForgeChat {
     
     // Bind event listeners
     this.bindEvents();
+    
+    // Load context and suggested questions
+    await this.loadContext();
     
     // Auto-open if configured
     if (this.options.autoOpen) {
@@ -101,6 +106,55 @@ class ForgeChat {
     }
 
     this.log('ForgeChat widget initialized successfully');
+  }
+
+  /**
+   * Load context data from backend
+   */
+  async loadContext() {
+    try {
+      const response = await fetch('/chat/context');
+      if (response.ok) {
+        this.contextData = await response.json();
+        this.updateSuggestedQuestions();
+        this.log('Context loaded:', this.contextData);
+      }
+    } catch (error) {
+      this.log('Failed to load context:', error);
+    }
+  }
+
+  /**
+   * Update suggested questions based on context
+   */
+  updateSuggestedQuestions() {
+    if (!this.contextData || !this.contextData.suggested_questions) return;
+    
+    const suggestionsContainer = this.container.querySelector('.chatbot-suggestions');
+    const suggestionsList = this.container.querySelector('.suggestions-list');
+    
+    if (!suggestionsContainer || !suggestionsList) return;
+    
+    // Clear existing suggestions
+    suggestionsList.innerHTML = '';
+    
+    // Add new suggestions
+    this.contextData.suggested_questions.forEach(question => {
+      const btn = document.createElement('button');
+      btn.className = 'suggestion-btn';
+      btn.textContent = question;
+      btn.onclick = () => {
+        this.elements.input.value = question;
+        this.handleInputChange();
+        this.sendMessage();
+      };
+      suggestionsList.appendChild(btn);
+    });
+    
+    // Show suggestions if we have any
+    if (this.contextData.suggested_questions.length > 0) {
+      suggestionsContainer.style.display = 'block';
+    }
   }
 
   /**
@@ -137,6 +191,11 @@ class ForgeChat {
         
         <div class="chatbot-messages" role="log" aria-live="polite" aria-label="Chat messages">
           <!-- Messages will be inserted here -->
+        </div>
+        
+        <div class="chatbot-suggestions" style="display: none;">
+          <div class="suggestions-title">💡 Suggested Questions:</div>
+          <div class="suggestions-list"></div>
         </div>
         
         <div class="chatbot-input-area">
@@ -413,8 +472,8 @@ class ForgeChat {
       // Hide typing indicator
       this.hideTyping();
       
-      // Add bot response
-      this.addMessage('bot', response.message || 'I understand. How else can I assist you?');
+      // Add bot response (BabbleBeaver uses 'response' field, not 'message')
+      this.addMessage('bot', response.response || response.message || 'I understand. How else can I assist you?');
       
       // Handle special responses
       if (response.suggestPunchlist) {
@@ -432,20 +491,56 @@ class ForgeChat {
    * Send message to AI service
    */
   async sendToAI(message) {
-    const payload = {
-      message: message,
-      conversation_id: this.conversationId,
-      session_id: this.sessionId,
-      product_uuid: this.options.productUuid,
-      organization_uuid: this.options.organizationUuid,
-      context: {
-        timestamp: new Date().toISOString(),
-        user_agent: navigator.userAgent,
-        page_url: window.location.href
+    // Fetch current context if not already loaded (first message only)
+    if (!this.contextData) {
+      try {
+        const contextResponse = await fetch('/chat/context');
+        if (contextResponse.ok) {
+          this.contextData = await contextResponse.json();
+        }
+      } catch (error) {
+        this.log('Failed to load context:', error);
       }
+    }
+    
+    // Build payload in BabbleBeaver format
+    const payload = {
+      prompt: message, // BabbleBeaver uses 'prompt', not 'message'
     };
+    
+    // Use context_hash if we have one (more efficient for follow-up messages)
+    if (this.contextHash) {
+      payload.context_hash = this.contextHash;
+      this.log('Using context hash for efficient follow-up');
+    } else {
+      // First message: include history (empty for new conversation)
+      payload.history = {
+        user: [],
+        bot: []
+      };
+      payload.tokens = 0;
+    }
+    
+    // Always send context (any JSON structure - BabbleBeaver enriches system prompt)
+    // Include product_uuid for Buildly Agent enrichment
+    payload.context = {
+      timestamp: new Date().toISOString(),
+      user_agent: navigator.userAgent,
+      page_url: window.location.href,
+      page_title: document.title,
+      current_section: this.getCurrentSection(),
+      viewport_width: window.innerWidth,
+      ...this.contextData
+    };
+    
+    // Add product_uuid if available (triggers Buildly Agent enrichment)
+    if (this.options.productUuid) {
+      payload.product_uuid = this.options.productUuid;
+    }
+    
+    this.log('Sending to BabbleBeaver:', payload);
 
-    const response = await fetch(`${this.options.apiEndpoint}/babblebeaver/`, {
+    const response = await fetch(`${this.options.apiEndpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -460,12 +555,87 @@ class ForgeChat {
 
     const data = await response.json();
     
-    // Store conversation ID for future messages
-    if (data.conversation_id) {
-      this.conversationId = data.conversation_id;
+    // Store context_hash from server for next message (performance optimization)
+    if (data.context_hash) {
+      this.contextHash = data.context_hash;
+      this.log('Context hash received, next message will be more efficient');
+    }
+    
+    // Log product enrichment if available
+    if (data.product_context && data.product_context.enriched) {
+      this.log('Product context enriched by Buildly Agent');
     }
 
     return data;
+  }
+
+  /**
+   * Get current section/page context
+   */
+  getCurrentSection() {
+    const path = window.location.pathname;
+    if (path.includes('/dashboard')) return 'dashboard';
+    if (path.includes('/roadmap')) return 'roadmap';
+    if (path.includes('/backlog')) return 'backlog';
+    if (path.includes('/products')) return 'products';
+    if (path.includes('/milestones')) return 'milestones';
+    if (path.includes('/releases')) return 'releases';
+    if (path.includes('/punchlist')) return 'punchlist';
+    if (path.includes('/profile')) return 'profile';
+    if (path.includes('/settings')) return 'settings';
+    return 'general';
+  }
+
+  /**
+   * Build system prompt with context awareness
+   */
+  buildSystemPrompt(context) {
+    let prompt = "You are an AI assistant for Buildly Labs, a product development platform. ";
+    
+    // Add user context
+    if (context.user) {
+      prompt += `You are helping ${context.user.first_name || context.user.username}. `;
+    }
+    
+    // Add organization context
+    if (context.organization) {
+      prompt += `They are working in the "${context.organization.name}" organization. `;
+    }
+    
+    // Add product context
+    if (context.product) {
+      prompt += `They are currently viewing the product "${context.product.name}"`;
+      if (context.product.description) {
+        prompt += ` (${context.product.description})`;
+      }
+      prompt += `. `;
+    }
+    
+    // Add page context
+    if (context.current_section) {
+      const sectionNames = {
+        'dashboard': 'Dashboard',
+        'roadmap': 'Product Roadmap',
+        'backlog': 'Backlog/Kanban Board',
+        'products': 'Products Portfolio',
+        'milestones': 'Milestones & Goals',
+        'releases': 'Release Planning',
+        'punchlist': 'Punchlist (Issues & Tasks)',
+        'profile': 'User Profile',
+        'settings': 'Settings'
+      };
+      const sectionName = sectionNames[context.current_section] || context.current_section;
+      prompt += `They are on the ${sectionName} page. `;
+    }
+    
+    // Instructions
+    prompt += "\n\nIMPORTANT: Use the provided context to give specific, relevant answers. ";
+    prompt += "When they ask about 'this product', 'my product', 'the current product', etc., ";
+    prompt += "refer to the product information provided in the context. ";
+    prompt += "Always provide actionable advice specific to their current view and product. ";
+    prompt += "Reference Buildly Labs documentation at https://docs.buildly.io when helpful.";
+    
+    return prompt;
   }
 
   /**
