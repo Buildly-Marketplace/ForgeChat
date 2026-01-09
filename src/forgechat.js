@@ -472,8 +472,10 @@ class ForgeChat {
       // Hide typing indicator
       this.hideTyping();
       
-      // Add bot response (BabbleBeaver uses 'response' field, not 'message')
-      this.addMessage('bot', response.response || response.message || 'I understand. How else can I assist you?');
+      // Add bot response - check multiple possible field names from BabbleBeaver
+      const botResponse = response.response || response.message || response.reply || response.output || response.text || response.answer || response.content;
+      this.log('Extracted bot response:', botResponse);
+      this.addMessage('bot', botResponse || 'I understand. How else can I assist you?');
       
       // Handle special responses
       if (response.suggestPunchlist) {
@@ -504,8 +506,10 @@ class ForgeChat {
     }
     
     // Build payload in BabbleBeaver format
+    // Include instruction for concise responses
+    const conciseInstruction = 'Please provide a concise response (2-3 short paragraphs max). Use bullet points for lists. Avoid lengthy explanations unless specifically asked for details.';
     const payload = {
-      prompt: message, // BabbleBeaver uses 'prompt', not 'message'
+      prompt: `${conciseInstruction}\n\nUser question: ${message}`,
     };
     
     // Use context_hash if we have one (more efficient for follow-up messages)
@@ -678,8 +682,14 @@ class ForgeChat {
   renderMessage(message) {
     const messageEl = document.createElement('div');
     messageEl.className = `message ${message.sender}`;
+    
+    // Bot messages get markdown rendering, user messages are escaped
+    const content = message.sender === 'bot' 
+      ? this.renderMarkdown(message.content)
+      : this.escapeHtml(message.content);
+    
     messageEl.innerHTML = `
-      <div class="message-bubble">${this.escapeHtml(message.content)}</div>
+      <div class="message-bubble markdown-content">${content}</div>
       <div class="message-time">${this.formatTime(message.timestamp)}</div>
     `;
 
@@ -990,6 +1000,76 @@ class ForgeChat {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Render markdown to HTML for bot messages
+   * Supports: headers, bold, italic, code, lists, links, blockquotes
+   */
+  renderMarkdown(text) {
+    if (!text) return '';
+    
+    let html = this.escapeHtml(text);
+    
+    // Code blocks (```code```)
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    
+    // Inline code (`code`)
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Headers (## Header) - process from h6 to h1
+    html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+    html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
+    html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^###\s+(.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^##\s+(.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^#\s+(.+)$/gm, '<h4>$1</h4>');
+    
+    // Bold (**text** or __text__)
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    
+    // Italic (*text* or _text_)
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    html = html.replace(/(?<!_)_([^_]+)_(?!_)/g, '<em>$1</em>');
+    
+    // Strikethrough (~~text~~)
+    html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    
+    // Links [text](url)
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    
+    // Blockquotes (> text)
+    html = html.replace(/^&gt;\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+    
+    // Horizontal rules (--- or ***)
+    html = html.replace(/^---+$/gm, '<hr>');
+    html = html.replace(/^\*\*\*+$/gm, '<hr>');
+    
+    // Unordered lists (- item or * item)
+    html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    
+    // Ordered lists (1. item)
+    html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    
+    // Checkboxes [ ] and [x]
+    html = html.replace(/\[\s*\]/g, '<input type="checkbox" disabled>');
+    html = html.replace(/\[x\]/gi, '<input type="checkbox" checked disabled>');
+    
+    // Emoji shortcuts
+    const emojis = {
+      '1️⃣': '1️⃣', '2️⃣': '2️⃣', '3️⃣': '3️⃣', '4️⃣': '4️⃣', '5️⃣': '5️⃣',
+      '6️⃣': '6️⃣', '7️⃣': '7️⃣', '8️⃣': '8️⃣', '📋': '📋', '🚀': '🚀'
+    };
+    
+    // Convert line breaks to <br> (but not inside pre/code blocks)
+    html = html.replace(/\n/g, '<br>');
+    
+    // Clean up multiple <br> tags
+    html = html.replace(/(<br>){3,}/g, '<br><br>');
+    
+    return html;
   }
 
   /**
