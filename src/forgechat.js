@@ -455,6 +455,12 @@ class ForgeChat {
     
     if (!message || this.isSubmitting) return;
     
+    // Hide suggestions panel after first message
+    const suggestionsContainer = this.container.querySelector('.chatbot-suggestions');
+    if (suggestionsContainer) {
+      suggestionsContainer.style.display = 'none';
+    }
+    
     // Add user message
     this.addMessage('user', message);
     
